@@ -1,0 +1,97 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# You may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
+# Copyright (C) 2023-2023 RT-Thread Development Team
+#
+# @author      xqyjlj
+# @file        build.yml
+#
+# Change Logs:
+# Date           Author       Notes
+# ------------   ----------   -----------------------------------------------
+# 2023-06-01     xqyjlj       initial version
+#
+
+name: 👷 build
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build-smart-apps:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        arch:
+          - aarch64
+          - arm
+          - riscv64gc
+          - xuantie
+
+    steps:
+      - name: ⬇️ checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: ⬇️ install xmake
+        shell: bash
+        run: |
+          wget -q https://github.com/xmake-io/xmake/releases/download/v2.8.7/xmake-v2.8.7.gz.run
+          sudo chmod 777 ./xmake-v2.8.7.gz.run
+          ./xmake-v2.8.7.gz.run
+
+      - name: 👷 build
+        shell: bash
+        run: |
+          export XMAKE_ROOT=y # Only need to use "--root" in CI
+          xmake --version
+          source env.sh
+          pushd apps
+            xmake f -a ${{ matrix.arch }} -vyD
+            xmake -j$(nproc) -vyD
+            xmake smart-rootfs -vD
+            xmake smart-image -f ext4 -vD -o build/${{ matrix.arch }}-ext4.img
+          popd
+
+  build-linux-apps:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        app:
+          - busybox
+          - cpp
+          - hello
+          - micropython
+          - zlib
+
+    steps:
+      - name: ⬇️ checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+
+      - name: ⬇️ install xmake
+        uses: xmake-io/github-action-setup-xmake@v1
+
+      - name: 👷 build
+        shell: bash
+        run: |
+          export XMAKE_ROOT=y # Only need to use "--root" in CI
+          xmake --version
+          source env.sh
+          pushd apps
+            echo "includes(path.join(path.join(os.scriptdir(), \"${{ matrix.app }}\"), \"xmake.lua\"))" > xmake.lua
+            xmake f -a x86_64 --target_os=linux -vyD
+            xmake -j$(nproc) -vyD -P .
+          popd

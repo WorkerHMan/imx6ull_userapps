@@ -1,0 +1,33 @@
+# Per default everything gets normalized and gets LF line endings on checkout.
+* text eol=lf
+
+# These are binary so should never be modified by git.
+*.a binary
+*.so binary
+*.png binary
+*.jpg binary
+*.pdf binary
+*.ico binary
+*.xmind binary
+*.bmp binary
+*.exe binary
+*.lzma binary
+*.zip binary
+*.Z binary
+*.xz binary
+*.ttf binary
+*.mo binary
+*.pb binary
+*.tga binary
+*.deb binary
+*.bin binary
+*.img binary
+
+cromfs-tool-* binary
+xfel binary
+make_ext4fs-* binary
+fatdisk-* binary
+udb binary
+
+# These should also not be modified by git.
+*.svg -text
